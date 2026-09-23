@@ -1,8 +1,23 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 
-const GEMINI_MODEL = 'gemini-3.6-flash';
-const SYSTEM_INSTRUCTION = `Ты — QALQAN AI, учебный помощник цифровой экосистемы Академии. Помогай пользователю изучать историю Казахстана, математику, IT, информационную безопасность, языки и другие учебные дисциплины. Объясняй простым и понятным языком, при необходимости используй пошаговое объяснение. Не запрашивай и не обрабатывай секретную, служебную или конфиденциальную информацию.`;
+const MODEL_CANDIDATES = Array.from(new Set([
+  process.env.GEMINI_MODEL,
+  'gemini-3.6-flash',
+  'gemini-2.5-flash'
+].filter(Boolean) as string[]));
+
+const SYSTEM_INSTRUCTION = `Ты — QALQAN AI, учебный помощник цифровой экосистемы Академии.
+
+Помогай пользователям:
+- изучать историю Казахстана;
+- изучать математику;
+- изучать IT;
+- изучать информационную безопасность;
+- готовиться к экзаменам.
+
+Отвечай понятно, структурированно и по шагам.
+Не запрашивай секретную информацию, служебные данные или персональные документы.`;
 
 type AttachmentInput = {
   name?: string;
@@ -18,6 +33,27 @@ function parseInlineDataFromDataUrl(dataUrl: string) {
   const mimeType = match[1] || 'application/octet-stream';
   const base64 = match[2] || '';
   return { mimeType, data: base64 };
+}
+
+function extractGeminiText(response: unknown): string {
+  if (!response || typeof response !== 'object') return '';
+
+  const candidateText = (response as { text?: string }).text;
+  if (typeof candidateText === 'string' && candidateText.trim()) {
+    return candidateText.trim();
+  }
+
+  const candidates = (response as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }).candidates;
+  if (Array.isArray(candidates)) {
+    const joined = candidates
+      .flatMap((candidate) => candidate?.content?.parts ?? [])
+      .map((part) => part?.text ?? '')
+      .join('')
+      .trim();
+    if (joined) return joined;
+  }
+
+  return '';
 }
 
 export async function POST(req: Request) {
@@ -40,13 +76,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Текст запроса обязателен' }, { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
 
-    if (!apiKey || !apiKey.trim()) {
+    if (!apiKey) {
       return NextResponse.json(
         {
           configured: false,
-          reply: 'QALQAN AI пока не настроен.\n\nДобавьте GEMINI_API_KEY в `.env.local` и перезапустите сервер.'
+          reply: 'QALQAN AI пока не настроен.\n\nВставьте валидный GEMINI_API_KEY в apps/web/.env.local и перезапустите сервер.'
         },
         { status: 200 }
       );
@@ -74,45 +110,47 @@ export async function POST(req: Request) {
         }
       }
 
-      const generateWithRetry = async (attempt = 0): Promise<string> => {
+      let lastError: unknown = null;
+
+      for (const modelName of MODEL_CANDIDATES) {
         try {
           const response = await ai.models.generateContent({
-            model: GEMINI_MODEL,
+            model: modelName,
             contents: [{ role: 'user', parts: messageParts }],
             config: {
               systemInstruction: SYSTEM_INSTRUCTION
             }
           });
 
-          const text = typeof response?.text === 'string' && response.text.trim()
-            ? response.text.trim()
-            : 'Ответ сформирован.';
-
-          return text;
+          const text = extractGeminiText(response) || 'Ответ сформирован.';
+          return NextResponse.json({ configured: true, reply: text });
         } catch (error) {
+          lastError = error;
           const message = error instanceof Error ? error.message : String(error);
-          const isRetryable = /429|503|UNAVAILABLE|RATE_LIMIT|high demand|temporar/i.test(message);
-
-          if (isRetryable && attempt < 2) {
-            await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
-            return generateWithRetry(attempt + 1);
-          }
-
-          throw error;
+          const modelUnavailable = /NOT_FOUND|model.*not.*available|invalid.*model|unsupported.*model|404/i.test(message);
+          if (!modelUnavailable) throw error;
+          console.warn(`Gemini model ${modelName} unavailable, trying fallback.`, message);
         }
-      };
+      }
 
-      const text = await generateWithRetry();
-
-      return NextResponse.json({ configured: true, reply: text });
+      throw lastError ?? new Error('Gemini model unavailable');
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const invalidKey = /invalid authentication credentials|UNAUTHENTICATED|ACCESS_TOKEN_TYPE_UNSUPPORTED|API key|401/i.test(message);
+      const modelIssue = /NOT_FOUND|model.*not.*available|unsupported.*model|invalid.*model|404/i.test(message);
+
       console.error('Gemini request failed:', error);
       return NextResponse.json(
         {
           configured: true,
-          reply: 'Не удалось получить ответ. Попробуйте ещё раз.'
+          reply: invalidKey
+            ? 'GEMINI_API_KEY невалиден, истёк или не соответствует Google Gemini. Замените ключ в apps/web/.env.local и перезапустите сервер.'
+            : modelIssue
+              ? 'Выбранная модель Gemini недоступна. Проверьте GEMINI_MODEL в apps/web/.env.local и используйте поддерживаемую модель.'
+              : 'Не удалось получить ответ. Попробуйте ещё раз.',
+          error: invalidKey ? 'INVALID_API_KEY' : modelIssue ? 'MODEL_UNAVAILABLE' : 'GEMINI_REQUEST_FAILED'
         },
-        { status: 200 }
+        { status: invalidKey ? 401 : 200 }
       );
     }
   } catch (error) {
