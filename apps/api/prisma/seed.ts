@@ -17,7 +17,7 @@ async function main() {
 
   const admin = await prisma.user.create({
     data: {
-      email: 'admin@ilyasbank.demo',
+      email: 'admin@qalqan.demo',
       fullName: 'Platform Admin',
       passwordHash,
       twoFactorSecret: 'ADMINSECRET',
@@ -30,7 +30,7 @@ async function main() {
     Array.from({ length: 12 }).map((_, index) =>
       prisma.user.create({
         data: {
-          email: `client${index + 1}@ilyasbank.demo`,
+          email: `client${index + 1}@qalqan.demo`,
           fullName: `Client ${index + 1}`,
           passwordHash,
           twoFactorSecret: `SECRET${index + 1}`,
@@ -106,7 +106,7 @@ async function main() {
       data: {
         userId: user.id,
         channel: 'IN_APP',
-        title: 'Welcome to ILYAS BANK 2.0',
+        title: 'Welcome to QALQAN 2.0',
         body: 'Your mobile dashboard, transfers and alerts are ready.'
       }
     });

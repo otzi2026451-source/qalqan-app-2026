@@ -20,7 +20,7 @@ export function MemeModeProvider({ children }: { children: ReactNode }) {
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem('ilyas-meme-mode');
+    const stored = window.localStorage.getItem('qalqan-meme-mode');
     const nextValue = stored === 'true';
     setEnabled(nextValue);
     document.documentElement.dataset.memeMode = nextValue ? 'on' : 'off';
@@ -32,7 +32,7 @@ export function MemeModeProvider({ children }: { children: ReactNode }) {
       toggle: () => {
         setEnabled((current) => {
           const next = !current;
-          window.localStorage.setItem('ilyas-meme-mode', String(next));
+          window.localStorage.setItem('qalqan-meme-mode', String(next));
           document.documentElement.dataset.memeMode = next ? 'on' : 'off';
           return next;
         });

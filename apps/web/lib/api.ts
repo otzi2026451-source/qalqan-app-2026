@@ -22,7 +22,7 @@ export async function getDashboardSnapshot() {
   // В демо-режиме возвращаем сервероподобный срез, чтобы UI был заполнен
   return {
     customer: {
-      name: 'Aruzhan Ilyassova',
+      name: 'Ayan Seyitov',
       tier: 'Premium',
       role: 'USER'
     },

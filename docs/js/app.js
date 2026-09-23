@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'ilyas_bank_state_v2';
+const STORAGE_KEY = 'qalqan_state_v2';
 
 const serviceRoutes = [
   { route: 'transfers', title: 'Переводы', icon: '↗', text: 'По телефону, карте или между счетами' },
@@ -73,7 +73,7 @@ function requireUser() {
   return user;
 }
 
-function ensureUser(email, name = 'Клиент ILYAS') {
+function ensureUser(email, name = 'Клиент QALQAN') {
   const normalized = email.toLowerCase().trim();
   if (!state.users[normalized]) {
     state.users[normalized] = {
@@ -94,7 +94,7 @@ function ensureUser(email, name = 'Клиент ILYAS') {
       }],
       credit: null,
       deposit: null,
-      notifications: ['Демо-режим активен', 'Переводы внутри ILYAS BANK без комиссии']
+      notifications: ['Демо-режим активен', 'Переводы внутри QALQAN без комиссии']
     };
   }
   return state.users[normalized];
@@ -158,7 +158,7 @@ function pageTitle(route) {
 function render() {
   const route = routeName();
   const user = currentUser();
-  document.title = `${pageTitle(route)} - ILYAS BANK`;
+  document.title = `${pageTitle(route)} - QALQAN`;
   document.getElementById('app').innerHTML = `
     <div class="app-shell">
       ${renderHeader(route, user)}
@@ -174,9 +174,9 @@ function renderHeader(route, user) {
   return `
     <header class="topbar">
       <div class="topbar-inner">
-        <a href="#home" class="brand" aria-label="ILYAS BANK">
-          <span class="brand-mark">I</span>
-          <span>ILYAS BANK</span>
+        <a href="#home" class="brand" aria-label="QALQAN">
+          <span class="brand-mark">Q</span>
+          <span>QALQAN</span>
         </a>
         <nav class="desktop-nav">
           ${visibleNav.map(item => `<a class="nav-link ${route === item.route ? 'active' : ''}" href="#${item.route}">${item.label}</a>`).join('')}
@@ -230,9 +230,9 @@ function renderHome() {
           </div>
         </div>
         <div class="hero-card card">
-          <div class="card-row"><strong>ILYAS Everyday</strong><span>VIRTUAL</span></div>
+          <div class="card-row"><strong>QALQAN Everyday</strong><span>VIRTUAL</span></div>
           <div class="bank-card-visual">
-            <div class="card-row"><span>ILYAS BANK</span><span class="chip"></span></div>
+            <div class="card-row"><span>QALQAN</span><span class="chip"></span></div>
             <div><div style="font-size:24px;font-weight:850;">500 000 ₸</div><div>•••• 4821</div></div>
           </div>
         </div>
@@ -496,7 +496,7 @@ function renderQR() {
         <div class="qr-box">${cells.map(c => `<div class="${c}"></div>`).join('')}</div>
       </div>
       <form class="card form" id="qr-form">
-        ${field('qrPurpose', 'Назначение', 'text', 'Кофейня ILYAS')}
+        ${field('qrPurpose', 'Назначение', 'text', 'Кофейня QALQAN')}
         ${field('qrAmount', 'Сумма', 'number', '2500')}
         <button class="btn btn-primary" type="submit">Оплатить по QR</button>
       </form>
@@ -554,7 +554,7 @@ function renderSupport() {
         <h2>Поддержка</h2>
         <div class="list">${faqs.map(q => `<div class="list-item"><strong>${q}</strong><span class="muted">Ответ в демо-чате</span></div>`).join('')}</div>
         <div class="stat"><span>Телефон</span><strong>5555</strong></div>
-        <div class="stat"><span>Email</span><strong>support@ilyas.bank</strong></div>
+        <div class="stat"><span>Email</span><strong>support@qalqan.edu</strong></div>
       </div>
       <div class="card">
         <h2>Чат</h2>
@@ -610,7 +610,7 @@ function bindAuth(route) {
     if (route === 'login' && data.password !== 'Test1234!' && ensureUser(data.email).password !== data.password) {
       return toast('Для демо используйте Test1234!', 'error');
     }
-    const user = ensureUser(data.email, data.name || 'Клиент ILYAS');
+    const user = ensureUser(data.email, data.name || 'Клиент QALQAN');
     if (route === 'register') {
       user.name = escapeHTML(data.name || user.name);
       user.phone = escapeHTML(data.phone || user.phone);
@@ -849,7 +849,7 @@ function bindHistory() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'ilyas-bank-statement.csv';
+    link.download = 'qalqan-statement.csv';
     link.click();
     URL.revokeObjectURL(url);
   });

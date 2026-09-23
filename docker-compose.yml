@@ -3,10 +3,10 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16
-    container_name: ilyas-bank-postgres
+    container_name: qalqan-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ilyas_bank
+      POSTGRES_DB: qalqan_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -16,7 +16,7 @@ services:
 
   redis:
     image: redis:7
-    container_name: ilyas-bank-redis
+    container_name: qalqan-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
