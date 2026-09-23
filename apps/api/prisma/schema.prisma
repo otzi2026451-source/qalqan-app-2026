@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AccountCurrency {
+  KZT
+  USD
+  EUR
+}
+
+enum TransactionType {
+  TOP_UP
+  WITHDRAWAL
+  TRANSFER
+  FX_EXCHANGE
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  FLAGGED
+}
+
+model User {
+  id               String         @id @default(cuid())
+  email            String         @unique
+  fullName         String
+  passwordHash     String
+  role             UserRole       @default(USER)
+  phone            String?
+  twoFactorSecret  String
+  twoFactorEnabled Boolean        @default(false)
+  refreshTokenHash String?
+  lastLoginAt      DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  accounts         Account[]
+  transactions     Transaction[]  @relation("UserTransactions")
+  auditLogs        AuditLog[]
+  notifications    Notification[]
+}
+
+model Account {
+  id               String            @id @default(cuid())
+  userId           String
+  currency         AccountCurrency
+  balance          Decimal           @db.Decimal(18, 2)
+  dailyDebitLimit  Decimal           @db.Decimal(18, 2)
+  dailyCreditLimit Decimal           @db.Decimal(18, 2)
+  isPrimary        Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  user             User              @relation(fields: [userId], references: [id])
+  outgoing         Transaction[]     @relation("SourceAccount")
+  incoming         Transaction[]     @relation("TargetAccount")
+
+  @@unique([userId, currency])
+}
+
+model Transaction {
+  id               String             @id @default(cuid())
+  userId           String
+  sourceAccountId  String?
+  targetAccountId  String?
+  type             TransactionType
+  status           TransactionStatus  @default(PENDING)
+  amount           Decimal            @db.Decimal(18, 2)
+  currency         AccountCurrency
+  fee              Decimal            @default(0) @db.Decimal(18, 2)
+  description      String?
+  flaggedReason    String?
+  ipAddress        String?
+  createdAt        DateTime           @default(now())
+  user             User               @relation("UserTransactions", fields: [userId], references: [id])
+  sourceAccount    Account?           @relation("SourceAccount", fields: [sourceAccountId], references: [id])
+  targetAccount    Account?           @relation("TargetAccount", fields: [targetAccountId], references: [id])
+}
+
+model FxRate {
+  id         String          @id @default(cuid())
+  base       AccountCurrency
+  quote      AccountCurrency
+  rate       Decimal         @db.Decimal(18, 6)
+  fetchedAt  DateTime        @default(now())
+
+  @@unique([base, quote])
+}
+
+model Notification {
+  id         String    @id @default(cuid())
+  userId      String
+  channel     String
+  title       String
+  body        String
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  userId       String
+  action       String
+  entityType    String
+  entityId      String
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+}

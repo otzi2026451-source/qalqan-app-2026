@@ -1,0 +1,8 @@
+{
+  "name": "QALQAN",
+  "description": "Цифровая экосистема Академии: учебные сервисы, eGov hub, AI-помощник, маркетплейс и цифровая безопасность.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

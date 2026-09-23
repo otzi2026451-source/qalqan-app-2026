@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="40" fill="#0B1422"/>
+  <rect x="6" y="6" width="180" height="180" rx="34" fill="#111E2F" stroke="#C5A059" stroke-width="2" stroke-opacity="0.3"/>
+  <!-- QALQAN geometric shield -->
+  <path d="M96 32L44 55V95C44 128 66 157 96 166C126 157 148 128 148 95V55L96 32Z" stroke="#C5A059" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="#15253A"/>
+  <path d="M96 66V132M68 96H124" stroke="#C5A059" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="96" cy="96" r="10" fill="#C5A059"/>
+  <circle cx="96" cy="66" r="6" fill="#C5A059"/>
+  <circle cx="96" cy="132" r="6" fill="#C5A059"/>
+  <circle cx="68" cy="96" r="6" fill="#C5A059"/>
+  <circle cx="124" cy="96" r="6" fill="#C5A059"/>
+</svg>
