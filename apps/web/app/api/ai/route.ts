@@ -113,23 +113,38 @@ export async function POST(req: Request) {
       let lastError: unknown = null;
 
       for (const modelName of MODEL_CANDIDATES) {
-        try {
-          const response = await ai.models.generateContent({
-            model: modelName,
-            contents: [{ role: 'user', parts: messageParts }],
-            config: {
-              systemInstruction: SYSTEM_INSTRUCTION
-            }
-          });
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            const response = await ai.models.generateContent({
+              model: modelName,
+              contents: [{ role: 'user', parts: messageParts }],
+              config: {
+                systemInstruction: SYSTEM_INSTRUCTION
+              }
+            });
 
-          const text = extractGeminiText(response) || 'Ответ сформирован.';
-          return NextResponse.json({ configured: true, reply: text });
-        } catch (error) {
-          lastError = error;
-          const message = error instanceof Error ? error.message : String(error);
-          const modelUnavailable = /NOT_FOUND|model.*not.*available|invalid.*model|unsupported.*model|404/i.test(message);
-          if (!modelUnavailable) throw error;
-          console.warn(`Gemini model ${modelName} unavailable, trying fallback.`, message);
+            const text = extractGeminiText(response) || 'Ответ сформирован.';
+            return NextResponse.json({ configured: true, reply: text });
+          } catch (error) {
+            lastError = error;
+            const message = error instanceof Error ? error.message : String(error);
+            const retriable = /429|503|UNAVAILABLE|RATE_LIMIT|high demand|temporar/i.test(message);
+            const modelUnavailable = /NOT_FOUND|model.*not.*available|invalid.*model|unsupported.*model|404/i.test(message);
+
+            if (retriable && attempt < 2) {
+              const delayMs = 1000 * (attempt + 1);
+              console.warn(`Gemini temporary overload for ${modelName}; retry ${attempt + 1}/3 in ${delayMs}ms`, message);
+              await new Promise((resolve) => setTimeout(resolve, delayMs));
+              continue;
+            }
+
+            if (modelUnavailable) {
+              console.warn(`Gemini model ${modelName} unavailable, trying fallback.`, message);
+              break;
+            }
+
+            throw error;
+          }
         }
       }
 

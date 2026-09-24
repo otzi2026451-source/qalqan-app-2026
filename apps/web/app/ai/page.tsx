@@ -35,6 +35,7 @@ const INITIAL_MESSAGES: Message[] = [
 const ATTACHMENT_STORAGE_KEY = 'qalqan-ai-session-attachments';
 const MAX_ATTACHMENTS = 4;
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+const CHAT_API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL || (typeof window !== 'undefined' && window.location.hostname.includes('localhost') ? 'http://localhost:3001/api/chat' : 'http://localhost:3001/api/chat');
 
 const formatBytes = (size: number) => {
   if (size < 1024) return `${size} B`;
@@ -204,7 +205,7 @@ export default function AiPage() {
     setLastError(null);
 
     try {
-      const res = await fetch('/api/ai', {
+      const res = await fetch(CHAT_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

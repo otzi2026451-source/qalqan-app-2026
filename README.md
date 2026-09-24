@@ -101,6 +101,30 @@ npm run build
 npm run start
 ```
 
+### 7) Публичный деплой на GitHub Pages + AI backend
+
+Так как GitHub Pages — это статический хостинг, реальный AI-эндпоинт нельзя держать на Pages. Правильная схема:
+
+1. Главный frontend публикуется через GitHub Pages.
+2. Реальный Gemini API вызов идёт на отдельный публичный backend.
+3. В frontend нужно указать `NEXT_PUBLIC_CHAT_API_URL` на публичный URL backend.
+
+Пример:
+
+```env
+NEXT_PUBLIC_CHAT_API_URL=https://your-backend.example.com/api/chat
+```
+
+Для публичного backend достаточно запустить Node-сервер из файла `api/server.js` на любом хостинге (Render, Railway, Fly.io, Cloud Run, VPS), а в окружении указать:
+
+```env
+GEMINI_API_KEY=ваш_ключ
+GEMINI_MODEL=gemini-3.6-flash
+PORT=3001
+```
+
+После этого GitHub Pages frontend сможет обращаться к вашему публичному backend со сторонних компьютеров.
+
 ## Основные команды
 
 ```bash

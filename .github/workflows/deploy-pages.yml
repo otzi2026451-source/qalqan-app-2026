@@ -2,7 +2,7 @@ name: Deploy QALQAN to GitHub Pages
 
 on:
   push:
-    branches: [master]
+    branches: [main, master]
   workflow_dispatch:
 
 permissions:
@@ -17,6 +17,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+      NEXT_PUBLIC_CHAT_API_URL: ${{ vars.NEXT_PUBLIC_CHAT_API_URL || 'https://your-backend.example.com/api/chat' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,15 +27,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-fund --no-audit
 
       - name: Build Next.js app for GitHub Pages
-        env:
-          NEXT_PUBLIC_BASE_PATH: /qalqan-app-2026
         run: npm run build --workspace=@qalqan/web
 
       - name: Upload static export artifact
